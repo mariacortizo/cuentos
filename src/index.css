@@ -1,0 +1,52 @@
+/* Fondo oscuro y texto claro para mejor contraste */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #000;
+  color: #fff;
+  font-size: 1.2rem; /* texto grande */
+  line-height: 1.6;
+}
+
+/* Centrado general */
+#root {
+  padding: 2rem;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* Botones accesibles */
+button {
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Área de texto grande y clara */
+textarea {
+  width: 100%;
+  height: 300px;
+  font-size: 1.2rem;
+  padding: 10px;
+  background-color: #111;
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 10px;
+}
+
+/* Ocultar botones al imprimir */
+@media print {
+  button {
+    display: none;
+  }
+}
