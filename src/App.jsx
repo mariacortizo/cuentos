@@ -1,13 +1,64 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 function App() {
   const [texto, setTexto] = useState('');
   const [escuchando, setEscuchando] = useState(false);
+  const [vozSeleccionada, setVozSeleccionada] = useState(null);
   const recognitionRef = useRef(null);
+
+  // Función para reemplazar comandos de voz por signos
+  const reemplazarComandos = (texto) => {
+    const comandos = [
+      { palabra: 'punto', reemplazo: '.' },
+      { palabra: 'coma', reemplazo: ',' },
+      { palabra: 'nueva línea', reemplazo: '\n' },
+      { palabra: 'salto de línea', reemplazo: '\n' },
+      { palabra: 'dos puntos', reemplazo: ':' },
+      { palabra: 'punto y coma', reemplazo: ';' },
+      { palabra: 'signo de exclamación', reemplazo: '!' },
+      { palabra: 'signo de admiración', reemplazo: '!' },
+      { palabra: 'signo de interrogación', reemplazo: '?' },
+    ];
+
+    let textoLimpio = texto.toLowerCase();
+
+    comandos.forEach(({ palabra, reemplazo }) => {
+      const regex = new RegExp(`\\b${palabra}\\b`, 'g');
+      textoLimpio = textoLimpio.replace(regex, reemplazo);
+    });
+
+    return textoLimpio;
+  };
+
+  // Cargar voz "Pablo" o similar en español y leer bienvenida
+  useEffect(() => {
+    const cargarYLeer = () => {
+      const voces = window.speechSynthesis.getVoices();
+
+      // Buscar voz "Pablo" en español
+      const vozPablo = voces.find(v => v.name.toLowerCase().includes('pablo') && v.lang.startsWith('es'));
+      const vozAlternativa = voces.find(v => v.lang.startsWith('es'));
+      const vozElegida = vozPablo || vozAlternativa;
+
+      setVozSeleccionada(vozElegida);
+
+      if (vozElegida) {
+        const bienvenida = new SpeechSynthesisUtterance('Soy Pablo. Presione el botón verde para empezar a dictar su cuento.');
+        bienvenida.voice = vozElegida;
+        bienvenida.lang = 'es-AR';
+        bienvenida.rate = 1;
+        window.speechSynthesis.speak(bienvenida);
+
+        console.log("Voz seleccionada:", vozElegida.name, vozElegida.lang);
+      }
+    };
+
+    window.speechSynthesis.onvoiceschanged = cargarYLeer;
+    cargarYLeer();
+  }, []);
 
   const iniciarDictado = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (!SpeechRecognition) {
       alert('Tu navegador no soporta reconocimiento de voz');
       return;
@@ -15,15 +66,17 @@ function App() {
 
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
-
     recognition.lang = 'es-AR';
     recognition.continuous = true;
 
     recognition.onresult = (event) => {
-      const resultado = Array.from(event.results)
+      let resultado = Array.from(event.results)
         .map(r => r[0].transcript)
-        .join('');
-      setTexto(prev => prev + resultado);
+        .join(' ');
+
+      resultado = reemplazarComandos(resultado);
+
+      setTexto(prev => prev + resultado + ' ');
     };
 
     recognition.onend = () => {
@@ -51,6 +104,10 @@ function App() {
     speech.rate = 1;
     speech.pitch = 1;
 
+    if (vozSeleccionada) {
+      speech.voice = vozSeleccionada;
+    }
+
     window.speechSynthesis.speak(speech);
   };
 
@@ -68,14 +125,13 @@ function App() {
     >
       <h1 style={{ fontSize: '2rem', margin: 0, marginBottom: 10 }}>Dictado de cuentos</h1>
 
-      {/* Contenedor del textarea */}
-      <div style={{ position: 'relative', flexGrow: 1, marginBottom: 20 }}>
+      {/* Contenedor textarea y botón borrar a la derecha */}
+      <div style={{ display: 'flex', flexGrow: 1, marginBottom: 20, gap: '10px' }}>
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           style={{
-            width: '100%',
-            height: '100%',
+            flexGrow: 1,
             fontSize: '1.5rem',
             padding: 15,
             backgroundColor: '#222',
@@ -84,29 +140,31 @@ function App() {
             border: '2px solid #555',
             resize: 'none',
             boxSizing: 'border-box',
+            height: '100%',
+            minHeight: '300px',
           }}
         />
-        {/* Botón borrar flotante */}
-        <button
-          onClick={() => setTexto('')}
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            backgroundColor: '#dc3545',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            fontSize: '1rem',
-            cursor: 'pointer',
-          }}
-        >
-          🗑️ Borrar
-        </button>
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <button
+            onClick={() => setTexto('')}
+            style={{
+              backgroundColor: '#dc3545',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              height: 'fit-content',
+            }}
+            aria-label="Borrar texto"
+          >
+            🗑️ Borrar
+          </button>
+        </div>
       </div>
 
-      {/* Botones finales */}
+      {/* Botones */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {!escuchando ? (
           <button onClick={iniciarDictado} style={botonGrande}>🎙️ Empezar a dictar</button>
@@ -121,6 +179,7 @@ function App() {
   );
 }
 
+// Estilos botones
 const botonStyle = {
   padding: '14px 24px',
   fontSize: '1.4rem',
@@ -134,7 +193,7 @@ const botonStyle = {
 const botonGrande = {
   ...botonStyle,
   fontSize: '1.8rem',
-  backgroundColor: '#28a745' // verde accesible
+  backgroundColor: '#28a745'
 };
 
 export default App;
