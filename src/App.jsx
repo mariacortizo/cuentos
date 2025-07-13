@@ -10,25 +10,35 @@ function App() {
   const recognitionRef = useRef(null);
 
   const reemplazarComandos = (texto) => {
-    const comandos = [
-      { palabra: 'punto', reemplazo: '.' },
-      { palabra: 'coma', reemplazo: ',' },
-      { palabra: 'nueva línea', reemplazo: '\n' },
-      { palabra: 'salto de línea', reemplazo: '\n' },
-      { palabra: 'dos puntos', reemplazo: ':' },
-      { palabra: 'punto y coma', reemplazo: ';' },
-      { palabra: 'signo de exclamación', reemplazo: '!' },
-      { palabra: 'signo de admiración', reemplazo: '!' },
-      { palabra: 'signo de interrogación', reemplazo: '?' },
-    ];
+  const comandos = [
+    { palabra: 'punto y aparte', reemplazo: '.\n\n' },
+    { palabra: 'punto y coma', reemplazo: ';' },
+    { palabra: 'punto', reemplazo: '.' },
+    { palabra: 'coma', reemplazo: ',' },
+    { palabra: 'nueva línea', reemplazo: '\n' },
+    { palabra: 'salto de línea', reemplazo: '\n' },
+    { palabra: 'dos puntos', reemplazo: ':' },
+    { palabra: 'signo de exclamación', reemplazo: '!' },
+    { palabra: 'signo de admiración', reemplazo: '!' },
+    { palabra: 'signo de interrogación', reemplazo: '?' },
+  ];
 
-    let textoLimpio = texto.toLowerCase();
-    comandos.forEach(({ palabra, reemplazo }) => {
-      const regex = new RegExp(`\\b${palabra}\\b`, 'g');
-      textoLimpio = textoLimpio.replace(regex, reemplazo);
-    });
-    return textoLimpio;
-  };
+  let textoLimpio = texto.toLowerCase();
+
+  // Reemplazar palabras por signos
+  comandos.forEach(({ palabra, reemplazo }) => {
+    const regex = new RegExp(`\\b${palabra}\\b`, 'g');
+    textoLimpio = textoLimpio.replace(regex, reemplazo);
+  });
+
+  // Capitalizar la primera letra de cada oración
+  textoLimpio = textoLimpio.replace(/(^\s*|[\.\!\?\n]\s*)([a-z])/g, (match, sep, letra) => {
+    return sep + letra.toUpperCase();
+  });
+
+  return textoLimpio;
+};
+
 
   useEffect(() => {
     const cargarYLeer = () => {
